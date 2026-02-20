@@ -1,13 +1,16 @@
 const express = require("express");
-
+const connectToDataBase = require("./db/db");
 const app = express();
+const dotenv = require("dotenv");
+dotenv.config();
 
-const PORT = 5000;
+const PORT = process.env.PORT;
+connectToDataBase();
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
 app.get("/", (req,res) => {
-    res.send("I am marijuana plant")
+    res.send("I am a marijuana plant")
 });
