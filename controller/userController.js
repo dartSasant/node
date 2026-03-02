@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../model/userModel");
 
+// REIGSTER
+
 const register = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -24,7 +26,7 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = User({
+    const newUser = new User({
       firstName,
       lastName,
       email,
@@ -47,18 +49,73 @@ const register = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Register Successful",
-      jwt,
+      token,
       newUser,
     });
   } catch (error) {
-    return status(500).json({
+    return res.status(500).json({
       success: false,
       message: `Internal Server Error: ${error}`,
     });
   }
 };
 
-const login = (req, res) => {};
+// LOGIN
+
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fill all feilds",
+      });
+    }
+
+    const existingEmail = await User.findOne({ email });
+    if (!existingEmail) {
+      return res.status(404).json({
+        success: false,
+        message: "User doesnt Exists",
+      });
+    }
+
+    const matchedPassword = await bcrypt.compare(
+      password,
+      existingEmail.password,
+    );
+    if (!matchedPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect Password",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        _id: existingEmail._id,
+        firstName: existingEmail.firstName,
+        lastName: existingEmail.lastName,
+        email: existingEmail.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Login Successful",
+      token,
+      existingEmail,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Internal Server Error: ${error.message}`,
+    });
+  }
+};
 
 module.exports = {
   register,
