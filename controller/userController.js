@@ -2,16 +2,13 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../model/userModel");
 
-// REIGSTER
-
 const register = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
-
   try {
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please fill all feilds",
+        message: "Pleas fill out all the feilds",
       });
     }
 
@@ -20,7 +17,7 @@ const register = async (req, res) => {
     if (existingEmail) {
       return res.status(400).json({
         success: false,
-        message: "Email alrady exists",
+        message: "User already exists",
       });
     }
 
@@ -41,6 +38,7 @@ const register = async (req, res) => {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         email: newUser.email,
+        isAdmin: newUser.isAdmin,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" },
@@ -48,45 +46,42 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Register Successful",
+      message: "Register successful",
       token,
       newUser,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: `Internal Server Error: ${error}`,
+      message: `Internal Server Error ${error}`,
     });
   }
 };
 
-// LOGIN
-
 const login = async (req, res) => {
   const { email, password } = req.body;
-
   try {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please fill all feilds",
+        message: "Please fillout all the feilds",
       });
     }
 
     const existingEmail = await User.findOne({ email });
     if (!existingEmail) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: "User doesnt Exists",
+        message: "Email isnt registered",
       });
     }
 
-    const matchedPassword = await bcrypt.compare(
+    const passwordMatch = await bcrypt.compare(
       password,
       existingEmail.password,
     );
-    if (!matchedPassword) {
-      return res.status(401).json({
+    if (!passwordMatch) {
+      return res.status(400).json({
         success: false,
         message: "Incorrect Password",
       });
