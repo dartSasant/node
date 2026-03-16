@@ -7,8 +7,6 @@ const PORT = process.env.PORT;
 
 // create app
 const app = express();
-
-// add middleware
 app.use(express.json());
 
 // connect to database
